@@ -1,0 +1,10 @@
+package base64
+
+version = 0.1.0
+authors = "Matthew Toohey <contact@mtoohey.com>"
+license = "MIT"
+
+depends = base >= 0.5.1
+
+sourcedir = "src"
+modules = Base64

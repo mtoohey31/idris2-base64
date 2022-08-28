@@ -1,0 +1,17 @@
+package base64-test
+
+version = 0.1.0
+authors = "Matthew Toohey <contact@mtoohey.com>"
+license = "MIT"
+
+depends = base >= 0.5.1
+        , contrib
+        , elab-util
+        , pretty-show
+        , sop
+        , hedgehog
+        , base64
+
+sourcedir = "src"
+main = Main
+executable = "base64-test"
