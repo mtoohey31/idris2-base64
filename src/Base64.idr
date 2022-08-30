@@ -13,8 +13,6 @@ import Data.String
 
 -- TODO: Require proof of bitwidth 6 or less to avoid partiality.
 
-||| Convert a value of bitwidth 6 or less to the corresponding encoded
-||| character.
 partial
 bits6ToChar : Bits8 -> Char
 bits6ToChar i = case i of
@@ -109,7 +107,6 @@ btoa = fastPack . btoa'
 -- TODO: Require proof that the character is a valid character to avoid
 -- partiality.
 
--- ||| Convert an encoded character to a value of bitwidth 6 or less.
 -- partial
 -- charToBits6 : Char -> Bits8
 -- charToBits6 c = case c of
@@ -202,7 +199,6 @@ export
 Show Base64Error where
   show (InvalidChar c) = "Invalid base64 character: " ++ singleton c
 
-||| Convert an encoded character to a value of bitwidth 6 or less.
 partial
 tryCharToBits6 : Char -> Either (Maybe Bits8) Base64Error
 tryCharToBits6 c = case c of
