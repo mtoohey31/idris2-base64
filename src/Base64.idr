@@ -83,6 +83,7 @@ bits6ToChar i = case i of
   62 => '+'
   63 => '/'
 
+||| Encode the list of bytes into their base64 char list representation.
 export
 btoa' : List Bits8 -> List Char
 btoa' (a :: b :: c :: xs) = let x1 = a `prim__shr_Bits8` 2
@@ -100,6 +101,7 @@ btoa' (a :: []) = let x1 = a `prim__shr_Bits8` 2
                   in (assert_total $ map bits6ToChar [x1, x2]) ++ ['=', '=']
 btoa' [] = []
 
+||| Encode the list of bytes into their base64 string representation.
 export
 btoa : List Bits8 -> String
 btoa = fastPack . btoa'
@@ -187,7 +189,7 @@ btoa = fastPack . btoa'
 -- atob : String -> List Bits8
 -- atob = atob' . fastUnpack
 
-||| Errors that can be encountered 
+||| Errors that can be encountered while decoding.
 export
 data Base64Error : Type
 data Base64Error = InvalidChar Char
@@ -293,6 +295,7 @@ makeFour x1 x2 x3 x4 = [(x1 `prim__shl_Bits8` 2) .|.
                           (x3 `prim__shr_Bits8` 2),
                         ((x3 .&. 3) `prim__shl_Bits8` 6) .|. x4]
 
+||| Attempt to decode the base64 encoded char list to its byte contents.
 export
 tryAtob' : List Char -> Either (List Bits8) Base64Error
 tryAtob' (a :: b :: c :: d :: xs) = case tryCharToBits6 a of
@@ -333,6 +336,7 @@ tryAtob' (a :: []) = case tryCharToBits6 a of
   Right e => Right e
 tryAtob' [] = Left []
 
+||| Attempt to decode the base64 encoded string to its byte contents.
 export
 tryAtob : String -> Either (List Bits8) Base64Error
 tryAtob = tryAtob' . fastUnpack
