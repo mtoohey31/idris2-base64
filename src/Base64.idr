@@ -2,6 +2,7 @@ module Base64
 
 import Data.Bits
 import Data.String
+import Data.DPair
 
 -- TODO: Do conversions with a static array lookups. This hasn't been done yet
 -- because Data.IOArray requires IO, and contrib's Data.Linear.Array requires
@@ -10,6 +11,23 @@ import Data.String
 -- (Rust does with `-C opt-level=3`), though explicitly writing it as array
 -- lookups would be preferable since it would be more readable and we wouldn't
 -- have to hope the backend will optimize things correctly.
+
+infixl 8 <<, >>
+
+(<<) : Bits8 -> Index {a = Bits8} -> Bits8
+(<<) = shiftL
+
+(>>) : Bits8 -> Index {a = Bits8} -> Bits8
+(>>) = shiftR
+
+i2 : Index {a = Bits8}
+i2 = Element (the Nat 2) %search
+
+i4 : Index {a = Bits8}
+i4 = Element (the Nat 4) %search
+
+i6 : Index {a = Bits8}
+i6 = Element (the Nat 6) %search
 
 -- TODO: Require proof of bitwidth 6 or less to avoid partiality.
 
@@ -84,18 +102,18 @@ bits6ToChar i = case i of
 ||| Encode the list of bytes into their base64 char list representation.
 export
 btoa' : List Bits8 -> List Char
-btoa' (a :: b :: c :: xs) = let x1 = a `prim__shr_Bits8` 2
-                                x2 = ((a .&. 3) `prim__shl_Bits8` 4) .|. (b `prim__shr_Bits8` 4)
-                                x3 = ((b .&. 15) `prim__shl_Bits8` 2) .|. (c `prim__shr_Bits8` 6)
+btoa' (a :: b :: c :: xs) = let x1 = a >> i2
+                                x2 = ((a .&. 3) << i4) .|. (b >> i4)
+                                x3 = ((b .&. 15) << i2) .|. (c >> i6)
                                 x4 = c .&. 63
                                 enc = assert_total $ map bits6ToChar [x1, x2, x3, x4]
                             in enc ++ btoa' xs
-btoa' (a :: b :: []) = let x1 = a `prim__shr_Bits8` 2
-                           x2 = ((a .&. 3) `prim__shl_Bits8` 4) .|. (b `prim__shr_Bits8` 4)
-                           x3 = (b .&. 15) `prim__shl_Bits8` 2
+btoa' (a :: b :: []) = let x1 = a >> i2
+                           x2 = ((a .&. 3) << i4) .|. (b >> i4)
+                           x3 = (b .&. 15) << i2
                        in (assert_total $ map bits6ToChar [x1, x2, x3]) ++ ['=']
-btoa' (a :: []) = let x1 = a `prim__shr_Bits8` 2
-                      x2 = (a .&. 3) `prim__shl_Bits8` 4
+btoa' (a :: []) = let x1 = a >> i2
+                      x2 = (a .&. 3) << i4
                   in (assert_total $ map bits6ToChar [x1, x2]) ++ ['=', '=']
 btoa' [] = []
 
@@ -272,24 +290,19 @@ tryCharToBits6 c = case c of
 -- TODO: is this case valid at all?
 
 makeOne : Bits8 -> List Bits8
-makeOne x1 = [x1 `prim__shr_Bits8` 2]
+makeOne x1 = [x1 >> i2]
 
 makeTwo : Bits8 -> Bits8 -> List Bits8
-makeTwo x1 x2 = [(x1 `prim__shl_Bits8` 2) .|.
-                   (x2 `prim__shr_Bits8` 4)]
+makeTwo x1 x2 = [(x1 << i2) .|. (x2 >> i4)]
 
 makeThree : Bits8 -> Bits8 -> Bits8 -> List Bits8
-makeThree x1 x2 x3 = [(x1 `prim__shl_Bits8` 2) .|.
-                        (x2 `prim__shr_Bits8` 4),
-                      ((x2 .&. 15) `prim__shl_Bits8` 4) .|.
-                         (x3 `prim__shr_Bits8` 2)]
+makeThree x1 x2 x3 = [(x1 << i2) .|. (x2 >> i4),
+                      ((x2 .&. 15) << i4) .|. (x3 >> i2)]
 
 makeFour : Bits8 -> Bits8 -> Bits8 -> Bits8 -> List Bits8
-makeFour x1 x2 x3 x4 = [(x1 `prim__shl_Bits8` 2) .|.
-                          (x2 `prim__shr_Bits8` 4),
-                        ((x2 .&. 15) `prim__shl_Bits8` 4) .|.
-                          (x3 `prim__shr_Bits8` 2),
-                        ((x3 .&. 3) `prim__shl_Bits8` 6) .|. x4]
+makeFour x1 x2 x3 x4 = [(x1 << i2) .|. (x2 >> i4),
+                        ((x2 .&. 15) << i4) .|. (x3 >> i2),
+                        ((x3 .&. 3) << i6) .|. x4]
 
 ||| Attempt to decode the base64 encoded char list to its byte contents.
 export
