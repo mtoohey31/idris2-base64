@@ -284,7 +284,7 @@ tryCharToBits6 c = case c of
   '9' => Left $ Just 61
   '+' => Left $ Just 62
   '/' => Left $ Just 63
-  '=' => Left $ Nothing
+  '=' => Left Nothing
   i => Right $ InvalidChar i
 
 -- TODO: is this case valid at all?
