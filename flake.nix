@@ -40,22 +40,7 @@
 
       devShells.default = mkShell {
         packages = [
-          ((devEnv idris2-base64).overrideAttrs (oldAttrs: {
-            paths = [
-              # TODO: compute these from the test package's contents
-              ((builtins.elemAt oldAttrs.paths 0).overrideAttrs
-                (oldAttrs: {
-                  paths = oldAttrs.paths ++ [
-                    pkgs.idris2-pkgs.contrib.asLib
-                    pkgs.idris2-pkgs.elab-util.asLib
-                    pkgs.idris2-pkgs.pretty-show.asLib
-                    pkgs.idris2-pkgs.sop.asLib
-                    pkgs.idris2-pkgs.hedgehog.asLib
-                  ];
-                })
-              )
-            ];
-          }))
+          (devEnv (pkgs.idris2-pkgs._builders.idrisPackage ./test { }))
         ];
       };
     });
