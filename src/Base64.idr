@@ -205,17 +205,19 @@ btoa = fastPack . btoa'
 -- atob = atob' . fastUnpack
 
 ||| Errors that can be encountered while decoding.
-export
-data Base64Error : Type
-data Base64Error = InvalidChar Char
+public export
+data Base64Error = InvalidChar Char | InvalidLength
 
 export
 Eq Base64Error where
   InvalidChar c1 == InvalidChar c2 = c1 == c2
+  InvalidLength == InvalidLength = True
+  _ == _ = False
 
 export
 Show Base64Error where
   show (InvalidChar c) = "Invalid base64 character: " ++ singleton c
+  show InvalidLength = "Invalid base64 input data length"
 
 partial
 tryCharToBits6 : Char -> Either (Maybe Bits8) Base64Error
@@ -287,11 +289,6 @@ tryCharToBits6 c = case c of
   '=' => Left Nothing
   i => Right $ InvalidChar i
 
--- TODO: is this case valid at all?
-
-makeOne : Bits8 -> List Bits8
-makeOne x1 = [x1 >> i2]
-
 makeTwo : Bits8 -> Bits8 -> List Bits8
 makeTwo x1 x2 = [(x1 << i2) .|. (x2 >> i4)]
 
@@ -318,7 +315,7 @@ tryAtob' (a :: b :: c :: d :: xs) = case tryCharToBits6 a of
         Right e => Right e
       Left Nothing => Left $ makeTwo x1 x2
       Right e => Right e
-    Left Nothing => Left $ makeOne x1
+    Left Nothing => Right InvalidLength
     Right e => Right e
   Left Nothing => Left []
   Right e => Right e
@@ -328,19 +325,19 @@ tryAtob' (a :: b :: c :: []) = case tryCharToBits6 a of
       Left (Just x3) => Left $ makeThree x1 x2 x3
       Left Nothing => Left $ makeTwo x1 x2
       Right e => Right e
-    Left Nothing => Left $ makeOne x1
+    Left Nothing => Right InvalidLength
     Right e => Right e
   Left Nothing => Left []
   Right e => Right e
 tryAtob' (a :: b :: []) = case tryCharToBits6 a of
   Left (Just x1) => case tryCharToBits6 b of
     Left (Just x2) => Left $ makeTwo x1 x2
-    Left Nothing => Left $ makeOne x1
+    Left Nothing => Right InvalidLength
     Right e => Right e
   Left Nothing => Left []
   Right e => Right e
 tryAtob' (a :: []) = case tryCharToBits6 a of
-  Left (Just x1) => Left $ makeOne x1
+  Left (Just x1) => Right InvalidLength
   Left Nothing => Left []
   Right e => Right e
 tryAtob' [] = Left []
