@@ -122,88 +122,6 @@ export
 btoa : List Bits8 -> String
 btoa = fastPack . btoa'
 
--- TODO: Require proof that the character is a valid character to avoid
--- partiality.
-
--- partial
--- charToBits6 : Char -> Bits8
--- charToBits6 c = case c of
---   'A' => 0
---   'B' => 1
---   'C' => 2
---   'D' => 3
---   'E' => 4
---   'F' => 5
---   'G' => 6
---   'H' => 7
---   'I' => 8
---   'J' => 9
---   'K' => 10
---   'L' => 11
---   'M' => 12
---   'N' => 13
---   'O' => 14
---   'P' => 15
---   'Q' => 16
---   'R' => 17
---   'S' => 18
---   'T' => 19
---   'U' => 20
---   'V' => 21
---   'W' => 22
---   'X' => 23
---   'Y' => 24
---   'Z' => 25
---   'a' => 26
---   'b' => 27
---   'c' => 28
---   'd' => 29
---   'e' => 30
---   'f' => 31
---   'g' => 32
---   'h' => 33
---   'i' => 34
---   'j' => 35
---   'k' => 36
---   'l' => 37
---   'm' => 38
---   'n' => 39
---   'o' => 40
---   'p' => 41
---   'q' => 42
---   'r' => 43
---   's' => 44
---   't' => 45
---   'u' => 46
---   'v' => 47
---   'w' => 48
---   'x' => 49
---   'y' => 50
---   'z' => 51
---   '0' => 52
---   '1' => 53
---   '2' => 54
---   '3' => 55
---   '4' => 56
---   '5' => 57
---   '6' => 58
---   '7' => 59
---   '8' => 60
---   '9' => 61
---   '+' => 62
---   '/' => 63
-
--- TODO: Require proof that the string is well-formed base64 data.
-
--- atob' : List Char -> List Bits8
--- atob' (a :: b :: c :: xs) = []
--- atob' (a :: b :: []) = []
--- atob' (a :: []) = []
--- atob' [] = []
-
--- atob : String -> List Bits8
--- atob = atob' . fastUnpack
-
 ||| Errors that can be encountered while decoding.
 public export
 data Base64Error = InvalidChar Char | InvalidLength
@@ -303,12 +221,12 @@ makeFour x1 x2 x3 x4 = [(x1 << i2) .|. (x2 >> i4),
 
 ||| Attempt to decode the base64 encoded char list to its byte contents.
 export
-tryAtob' : List Char -> Either (List Bits8) Base64Error
-tryAtob' (a :: b :: c :: d :: xs) = case tryCharToBits6 a of
+atob' : List Char -> Either (List Bits8) Base64Error
+atob' (a :: b :: c :: d :: xs) = case tryCharToBits6 a of
   Left (Just x1) => case tryCharToBits6 b of
     Left (Just x2) => case tryCharToBits6 c of
       Left (Just x3) => case tryCharToBits6 d of
-        Left (Just x4) => case tryAtob' xs of
+        Left (Just x4) => case atob' xs of
           Left ys => Left $ makeFour x1 x2 x3 x4 ++ ys
           Right e => Right e
         Left Nothing => Left $ makeThree x1 x2 x3
@@ -319,7 +237,7 @@ tryAtob' (a :: b :: c :: d :: xs) = case tryCharToBits6 a of
     Right e => Right e
   Left Nothing => Left []
   Right e => Right e
-tryAtob' (a :: b :: c :: []) = case tryCharToBits6 a of
+atob' (a :: b :: c :: []) = case tryCharToBits6 a of
   Left (Just x1) => case tryCharToBits6 b of
     Left (Just x2) => case tryCharToBits6 c of
       Left (Just x3) => Left $ makeThree x1 x2 x3
@@ -329,20 +247,20 @@ tryAtob' (a :: b :: c :: []) = case tryCharToBits6 a of
     Right e => Right e
   Left Nothing => Left []
   Right e => Right e
-tryAtob' (a :: b :: []) = case tryCharToBits6 a of
+atob' (a :: b :: []) = case tryCharToBits6 a of
   Left (Just x1) => case tryCharToBits6 b of
     Left (Just x2) => Left $ makeTwo x1 x2
     Left Nothing => Right InvalidLength
     Right e => Right e
   Left Nothing => Left []
   Right e => Right e
-tryAtob' (a :: []) = case tryCharToBits6 a of
+atob' (a :: []) = case tryCharToBits6 a of
   Left (Just x1) => Right InvalidLength
   Left Nothing => Left []
   Right e => Right e
-tryAtob' [] = Left []
+atob' [] = Left []
 
 ||| Attempt to decode the base64 encoded string to its byte contents.
 export
-tryAtob : String -> Either (List Bits8) Base64Error
-tryAtob = tryAtob' . fastUnpack
+atob : String -> Either (List Bits8) Base64Error
+atob = atob' . fastUnpack

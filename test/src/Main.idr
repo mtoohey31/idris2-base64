@@ -8,13 +8,13 @@ bytesGen = list (linear 0 100) $ bits8 (linear 0 255)
 
 propBytes : Property
 propBytes = property $ do b <- forAll bytesGen
-                          Left b === tryAtob (btoa b)
+                          Left b === atob (btoa b)
 
 propInvalidCharError : Property
-propInvalidCharError = withTests 1 . property $ Right (InvalidChar '%') === tryAtob "AA%A"
+propInvalidCharError = withTests 1 . property $ Right (InvalidChar '%') === atob "AA%A"
 
 propInvalidLengthError : Property
-propInvalidLengthError = withTests 1 . property $ Right InvalidLength === tryAtob "AAAAA"
+propInvalidLengthError = withTests 1 . property $ Right InvalidLength === atob "AAAAA"
 
 main : IO ()
 main = test . pure $ MkGroup "Base64" [
